@@ -7,8 +7,8 @@ library(MuMIn)
 library(visreg)
 
 ## load data and calculate the averaged gs and variances
-datadir = shortPathName("C:/Users/Guochun Yang/OneDrive - University of Iowa/WithLi/laterality/")
-savedir = shortPathName("C:/Users/Guochun Yang/OneDrive - University of Iowa/WithLi/laterality/plot_weightn/")
+datadir = shortPathName("D:/meta-analysis/laterality/")
+savedir = shortPathName("D:/meta-analysis/laterality/plot_weightn/")
 
 filename = "laterality_g_all.csv"
 
