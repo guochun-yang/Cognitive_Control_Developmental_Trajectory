@@ -5,18 +5,20 @@ library(rms)
 library(mgcv)
 library(MuMIn)
 library(visreg)
+library(readxl)
+library(fastDummies)
 
 ## load data and calculate the averaged gs and variances
-datadir = shortPathName("D:/meta-analysis/laterality/")
-savedir = shortPathName("D:/meta-analysis/laterality/plot_weightn/")
+datadir = shortPathName("H:/meta_development/Results_R1/laterality/")
+savedir = datadir
 
 filename = "laterality_g_all.csv"
 
-AICs = matrix(, nrow = 3, ncol = 6)
-BICs = matrix(, nrow = 3, ncol = 6)
-QMps = matrix(, nrow = 3, ncol = 6)
-QMs = matrix(, nrow = 3, ncol = 6)
-modelweights = matrix(, nrow = 3, ncol = 6)
+AICs = matrix(, nrow = 3, ncol = 4)
+BICs = matrix(, nrow = 3, ncol = 4)
+QMps = matrix(, nrow = 3, ncol = 4)
+QMs = matrix(, nrow = 3, ncol = 4)
+modelweights = matrix(, nrow = 3, ncol = 4)
 
 
 bs<- reses_lin <- reses_qua <- reses_cub <- reses_log <- reses_sqrt <- c()
@@ -40,8 +42,58 @@ data$weight = data$n #1/data$variance
 
 data$LR = sign(data$laterality_pmn)
 data$LR12 = (data$LR+3)/2
-
+data$age = as.numeric(data$age)
 agefull = max(data$age)+min(data$age)
+
+
+## load SDM table
+sdmdir = 'H:/meta_development/Results_R1/SDM/mean/' #sdm_good
+sdmtable = read.table(
+  paste(sdmdir, '/sdm_table.txt', sep = ''),
+  header = TRUE,
+  sep = '',
+  dec = '.'
+)
+
+## load the supplementary table to read the covariates
+supptable = read_excel(
+  'C:/Users/Guochun Yang/OneDrive - University of Iowa/WithLi/Paper/data_share/R1/SRC元分析文献汇总_lizh_ygc.xlsx',
+  sheet = 'TableS1-整合',
+  skip = 1
+)
+# add corresponding covariates
+idx2s<-c()
+for (istudy in 1:length(data$study)) {
+  # print(istudy)
+  idx <- which(supptable$AuthoYear == data$study[istudy])
+  # data2$varianceAgerange[istudy] <- as.numeric(supptable$Variance[idx])
+  # data2$varianceAdjusted[istudy] <- data2$variance[istudy] * as.numeric(supptable$Variance[idx]) #adjust the variance by multiply the two variance sources
+  data$TaskCode[istudy] <- supptable$TaskCode[idx]
+  data$HandnessCode[istudy] <- supptable$HandnessCode[idx]
+  data$ContrastCode[istudy] <- supptable$ContrastCode[idx]
+  data$ErrorTrialCode[istudy] <- supptable$ErrorTrialCode[idx]
+  
+  #add age from sdmtable
+  idx2 <- which(sdmtable$study == data$study[istudy])
+  idx2s<-c(idx2s,idx2)
+  data$age[istudy] <- sdmtable$avgAge[idx2]
+  data$age0[istudy] <- sdmtable$avgAge[idx2]
+}
+
+## add dummy columns
+data <- dummy_cols(data, 
+                    select_columns = c("TaskCode","HandnessCode","ContrastCode","ErrorTrialCode"))
+
+## z-score these columns
+idx_col <- which(colnames(data) %in% c('TaskCode_1','TaskCode_2','TaskCode_3','TaskCode_4',
+                                        'HandnessCode_1','HandnessCode_2','HandnessCode_3',
+                                        'ContrastCode_1','ContrastCode_2','ContrastCode_3',
+                                        'ErrorTrialCode_1','ErrorTrialCode_2','ErrorTrialCode_3'))
+for (icol in 1:length(idx_col)) {
+  data[,idx_col[icol]] = as.vector(scale(data[,idx_col[icol]]))
+}
+
+
 
   
 for (i in 1:3) { #1:absolute value; 2: raw R-L value ; 3:raw L-R
@@ -64,39 +116,40 @@ for (i in 1:3) { #1:absolute value; 2: raw R-L value ; 3:raw L-R
   }
 
   # models
-  b <- gam(laterality~s(age),data=data, weights = weight, method = 'REML')
+  b <- gam(laterality~s(age)+ TaskCode_1 + TaskCode_2 + TaskCode_3 + HandnessCode_1 + HandnessCode_2 + ContrastCode_1 + ContrastCode_2 + ErrorTrialCode_1,data=data, weights = weight, method = 'REML')
   bs[[i]] = b
   res.lin <- 
     rma(laterality, 
         variance, 
-        mods = ~ age,
+        mods = ~ age
+        + TaskCode_1 + TaskCode_2 + TaskCode_3 + HandnessCode_1 + HandnessCode_2 + ContrastCode_1 + ContrastCode_2 + ErrorTrialCode_1,
         data = data)
   res.qua <- 
     rma(laterality, 
         variance, 
-        mods = ~ age + I(age^2),# + (age + I(age^2)|LR), 
+        mods = ~ age + I(age^2)+ TaskCode_1 + TaskCode_2 + TaskCode_3 + HandnessCode_1 + HandnessCode_2 + ContrastCode_1 + ContrastCode_2 + ErrorTrialCode_1,
         data = data)
   res.cub <-
     rma(laterality,
         variance,
-        mods = ~ age + I(age^2) + I(age^3), 
+        mods = ~ age + I(age^2) + I(age^3)+ TaskCode_1 + TaskCode_2 + TaskCode_3 + HandnessCode_1 + HandnessCode_2 + ContrastCode_1 + ContrastCode_2 + ErrorTrialCode_1,
         data = data)
   res.log <-
     rma(laterality,
         variance,
-        mods = ~ I(log(age)) + I((log(age))^2),
+        mods = ~ I(log(age)) + I((log(age))^2)+ TaskCode_1 + TaskCode_2 + TaskCode_3 + HandnessCode_1 + HandnessCode_2 + ContrastCode_1 + ContrastCode_2 + ErrorTrialCode_1,
         data = data)
   
-  data_type <- data[which(abs(data$Type) > 0),]
-  res.log_int <-
-    rma(laterality,
-        variance,
-        mods = ~ I(log(age)) + I((log(age))^2) + Type + I(log(age)):Type + I((log(age))^2):Type,
-        data = data_type)
+  # data_type <- data[which(abs(data$Type) > 0),]
+  # res.log_int <-
+  #   rma(laterality,
+  #       variance,
+  #       mods = ~ I(log(age)) + I((log(age))^2) + Type + I(log(age)):Type + I((log(age))^2):Type,
+  #       data = data_type)
   res.sqrt <-
     rma(laterality,
         variance,
-        mods = ~ I(sqrt(age)) + age, 
+        mods = ~ I(sqrt(age)) + age+ TaskCode_1 + TaskCode_2 + TaskCode_3 + HandnessCode_1 + HandnessCode_2 + ContrastCode_1 + ContrastCode_2 + ErrorTrialCode_1, 
         data = data)
 
   reses_qua[[i]] = res.qua
@@ -138,10 +191,11 @@ library(MASS)
 
 modelweights2 <- format(round(modelweights, 3), nsmall = 3)
   
+
 ### draw plot
 xs <- seq(8, 75, length=500)
 
-for (i in 1:3) {
+for (i in 3) {
   if (i == 1) {
     name = 'absolute_'
     ylabname = 'laterality(absolute value)'
@@ -152,103 +206,194 @@ for (i in 1:3) {
     name = 'raw_L-R_'
     ylabname = 'laterality(L-R)'  
   }
-    
+  
+  mtx_cov_xs <- matrix(0,nrow = length(xs), ncol = length(reses_qua[[i]]$beta)-3)
   if (minAIC[i] == 1) {
     modelbest = reses_qua[[i]]
     title = "QUADRATIC"
     sav <-
-      predict(modelbest, newmods = unname(poly(
+      predict(modelbest, newmods = unname(cbind(poly(
         xs, degree = 2, raw = TRUE
-      )))
+      ),mtx_cov_xs)))
+    peak_rma = -0.5*modelbest$b[2,1]/modelbest$b[3,1]
   } else if (minAIC[i] == 2) {
     modelbest = reses_cub[[i]]
     title = "CUBIC"
     sav <-
-      predict(modelbest, newmods = unname(poly(
+      predict(modelbest, newmods = unname(cbind(poly(
         log(xs), degree = 2, raw = TRUE
-      )))
+      ),mtx_cov_xs)))
+    if (modelbest$b[4,1] > 0) {
+      peak_rma = (-2*modelbest$b[3,1] - sqrt(4*(modelbest$b[3,1])^2 - 12*modelbest$b[2,1]*modelbest$b[4,1]))/(6*modelbest$b[4,1])
+    } else {
+      peak_rma = (-2*modelbest$b[3,1] + sqrt(4*(modelbest$b[3,1])^2 - 12*modelbest$b[2,1]*modelbest$b[4,1]))/(6*modelbest$b[4,1])
+    }
   } else if (minAIC[i] == 3) {
     modelbest = reses_log[[i]]
     title = "LOG"
     sav <-
-      predict(modelbest, newmods = unname(poly(
+      predict(modelbest, newmods = unname(cbind(poly(
         log(xs), degree = 2, raw = TRUE
-      )))
+      ),mtx_cov_xs)))
+    peak_rma = exp(-modelbest$b[2,1]/(2*modelbest$b[3,1]))
   } else if (minAIC[i] == 4) {
     modelbest = reses_sqrt[[i]]
     title = "SQRT"
     sav <-
-      predict(modelbest, newmods = unname(poly(
+      predict(modelbest, newmods = unname(cbind(poly(
         sqrt(xs), degree = 2, raw = TRUE
-      )))
+      ),mtx_cov_xs)))
+    peak_rma = 0.25*(modelbest$b[2,1]/modelbest$b[3,1])^2
   }
 
   filename = 'log'
     
+
+  
+  ylim0 <- c()
+  maxvar = max(data$variance)
+  ylim0[1] = min(floor((data$laterality-maxvar)*100)/100)
+  ylim0[2] = max(ceiling((data$laterality+maxvar)*100)/100)
+
+  modpred <- data.frame(xs,sav$pred,sav$se)
+  modpred$upper <- modpred$sav.pred + modpred$sav.se
+  modpred$lower <- modpred$sav.pred - modpred$sav.se
+  
+  
+  ### gam prediction
+  b <- bs[[i]]
+  xs0 <- b$model$age
+  preds0 <- predict.gam(b,se.fit = TRUE)
+  
+  # mtx_b <- data.frame(model.matrix(b)) # if outliers removed the data points are different with data2, so here use the model matrix to get the covariate values
+  
+  preds <- predict(b, newdata = data.frame(
+    age = xs,
+    TaskCode_1 = 0,
+    TaskCode_2 = 0,
+    TaskCode_3 = 0,
+    HandnessCode_1 = 0,
+    HandnessCode_2 = 0,
+    ContrastCode_1 = 0,
+    ContrastCode_2 = 0,
+    ErrorTrialCode_1 = 0,
+    ErrorTrialCode_2 = 0
+  ),se.fit = TRUE)
+  
+  peak_gam <- xs[which.min(preds$fit)]
+  if (peak_gam > 60) {
+    peak_gam <- NaN
+  }
+
+  gampred <- data.frame(xs,preds$fit,preds$se.fit)
+  gampred$upper <- gampred$preds.fit + gampred$preds.se.fit
+  gampred$lower <- gampred$preds.fit - gampred$preds.se.fit
+
+  
+  ### plot all at once
   tiff(
-    file = paste(savedir, name, title, ".tiff", sep = ''),
+    file = paste(savedir, name, title, "_nopeak.tiff", sep = ''),
     width = 6,
     height = 5,
     units = "in",
     res = 300
   )
   
-  ylim0 <- c()
-  maxvar = max(data$variance)
-  ylim0[1] = min(floor((data$laterality-maxvar)*100)/100)
-  ylim0[2] = max(ceiling((data$laterality+maxvar)*100)/100)
-  
+  # windows()
   par(cex.lab=2)
-  par(cex.axis=2)
+  par(cex.axis=1.8)
   par(mai=c(1,1.2,0.2,0.2))
-  # par(mgp=c(2,0.5,0),xaxs='i')
-  # par(mgp=c(2,1,0),mgp=c(5,0.5,0))
-  # par(mgp=c(3.5,0.5,0),yaxs='i')
+  par(mgp=c(3.5,1,0))
   plt = regplot(
     reses_qua[[i]], # this is only to make sure all dots are with the original scale (we can also use reses_cub but not log)
     mod = 2,
     lcol = 'red',
+    # pred = FALSE,
     ci=FALSE,
-    pred = sav,
+    pred = FALSE,
     xvals = xs,
     las = 1,
     digits = 1,
     bty = "l",
-    xlim = c(8, 75),
     psize = .20 / sqrt(modelbest$vi),
-    xlab = ' ',
-    ylab = ' '
-    
-    #main = title
+    xlab = "Age (years)",ylab = "Laterality(L-R)",
+    xlim = c(8, 75),
+    ylim = c(ylim0[1],ylim0[2])
   )
-  title(ylab = ylabname, mgp = c(4, 1, 0))
-  title(xlab = 'Age', mgp = c(2.5, 1, 0))
-  # axis(1,mgp=c(3,0.5,0))
+  lim0 <- par("usr")
   
   par(new=TRUE)
-  # add visreg
-  b <- bs[[i]]
-  preds <- predict.gam(b, newdata = data.frame(age = xs))
-  if(i==2){
-    peak_gam <- xs[which.max(preds)]
-    peak_rma <- xs[which.max(sav$pred)]
-  } else {
-    peak_gam <- xs[which.min(preds)]
-    peak_rma <- xs[which.min(sav$pred)]
-  }
+  # windows()
+  lines(modpred$xs, modpred$sav.pred, type = 'l', lwd = 3, col = 'red')  # or type = 'n' if you just want to set up axes
+  transparent_red <- rgb(1, 0, 0, alpha = 0.2)  # For example, gray with 50% transparency
+  polygon(c(modpred$xs, rev(modpred$xs)), c(modpred$upper, rev(modpred$lower)), col = transparent_red, border = NA)
+  lines(modpred$xs, modpred$sav.pred)  # Add main line after to ensure it's on top
+  
+  
+  par(new=TRUE)
+  transparent_color <- rgb(0, 0, 1, alpha = 0.2)  # For example, gray with 50% transparency
+  lines(gampred$xs, gampred$preds.fit, type = 'l', lwd = 3, col = 'blue')  # or type = 'n' if you just want to set up axes
+  polygon(c(gampred$xs, rev(gampred$xs)), c(gampred$upper, rev(gampred$lower)), col = transparent_color, border = NA)
+  lines(gampred$xs, gampred$preds.fit)  # Add main line after to ensure it's on top
+  # lines(xs0, preds0$fit, type = 'l', lwd = 3, col = 'blue')  # or type = 'n' if you just want to set up axes
+  # polygon(c(xs0, rev(xs0)), c(preds0$fit + preds0$se.fit, rev(preds0$fit - preds0$se.fit)), col = transparent_color, border = NA)
+  # lines(xs0, preds0$fit)  # Add main line after to ensure it's on top
 
-  # peak_gams[i] = round(peak_gam,1)
-  # visreg(b,axes=FALSE, pch = NA, xlab='',ylab='',yaxs='i',ylim = c(lim0[3],lim0[4]))
-  visreg(b,"age",
-         overlay = TRUE,partial = FALSE, rug = FALSE,
-         line=list(lty=1, col="blue"), alpha=0,
-         points=list(cex=1, pch=26),
-         axes=FALSE, xlab='',ylab='',yaxs='i',ylim = c(ylim0[1],ylim0[2]))
-  
-  par(new=TRUE)
-  lines(c(peak_rma,peak_rma),ylim0,lty = 2,col = 'red',lwd = 2)
-  par(new=TRUE)
-  lines(c(peak_gam,peak_gam),ylim0,lty = 2,col = 'blue',lwd = 2)
-  
+  # par(new=TRUE)
+  # lines(c(peak_rma,peak_rma),ylim0,lty = 2,col = 'red',lwd = 2)
+  # par(new=TRUE)
+  # lines(c(peak_gam,peak_gam),ylim0,lty = 2,col = 'blue',lwd = 2)
   dev.off()
 }
+
+
+## test the significance of peaks with the Simonsohn (2018)'s two-line approach. 
+# Simonsohn, U. (2018) Two Lines: A Valid Alternative to the Invalid Testing of U-Shaped Relationships With Quadratic Regressions. Advances in Methods and Practices in Psychological Science, 1(4), 538-555.
+psb <- array(,dim = c(2,2)) #2(L,R)x(peakGAM,peakRMA)
+for (ipeak in 1:2) {
+  # for (i in 1:length(bs)) {
+    b <- bs[[3]]
+    bsum <- summary(b)
+    if (bsum$s.pv > 0.05) {psb[iana,ipeak] = NA; next}
+    datab <- b$model
+    datab$var <- 1/datab$`(weights)`
+    datab$weight <- datab$`(weights)`
+    datab$sqrtage <- sqrt(datab$age)
+    predictb <- predict(b, newdata = data.frame(
+      age = datab$age,
+      TaskCode_1 = 0,
+      TaskCode_2 = 0,
+      TaskCode_3 = 0,
+      HandnessCode_1 = 0,
+      HandnessCode_2 = 0,
+      ContrastCode_1 = 0,
+      ContrastCode_2 = 0,
+      ErrorTrialCode_1 = 0,
+      ErrorTrialCode_2 = 0
+    ))
+    if (ipeak == 1) {
+      idx <- which(predictb==max(predictb))
+    } else {
+      peak <- peak_rma
+      idx <- which.min(abs(datab$age-peak))
+    }
+    
+    if (length(idx) == 1) {
+      databL <- datab[1:idx,]
+      databR <- datab[idx:length(predictb),]
+    } else {
+      databL <- datab[1:idx[1],]
+      databR <- datab[idx[-1]:length(predictb),]
+    }
+    
+    # fit linear model and see if the slope is significant
+    step = 0.1
+    for (iana in 1:2) { #left and right
+      if (iana == 1) {databX <- databL} else {databX <- databR}
+      bX <- gam(laterality~age + TaskCode_1 + TaskCode_2 + TaskCode_3 + HandnessCode_1 + HandnessCode_2 + ContrastCode_1 + ContrastCode_2 + ErrorTrialCode_1, data=databX, weights = weight, method = 'REML')
+      bXsum <- summary(bX)
+      psb[iana,ipeak] <- bXsum$p.pv[2]
+    }
+  # }
+}
+psb2 = psb/2
