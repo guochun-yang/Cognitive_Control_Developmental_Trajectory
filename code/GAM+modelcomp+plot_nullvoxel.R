@@ -9,7 +9,7 @@ library(mgcv)
 library(MASS)
 library("readxl")
 library(fastDummies)
-source('H:/meta_development/Results_R1/SDM/scripts/naturalSortFunctions.R')
+source('H:/meta_development/Results_R1/SDM/scripts_NHB/naturalSortFunctions.R')
 
 ## load data and calculate the averaged betas and variances
 datadir = shortPathName("H:/meta_development/Results_R1/SDM/mean/analysis_Adult-ChildOld/") 
@@ -17,7 +17,7 @@ sdmdir = 'H:/meta_development/Results_R1/SDM/mean/' #sdm_good
 
 filenames = c("extract_22_-63_42.txt","extract_34_4_52.txt")
 
-savedir = shortPathName("H:/meta_development/Results_R1/SDM/mean/analysis_Adult-ChildOld/plot/null_voxel/")
+savedir = shortPathName("H:/meta_development/Results_R1/SDM/mean/analysis_Adult-ChildOld/plot/null_voxel+design/")
 if (!dir.exists(savedir)) {
   dir.create(savedir, recursive = TRUE)
 }
@@ -34,8 +34,9 @@ sdmtable = read.table(
 
 ## load the supplementary table to read the covariates
 supptable = read_excel(
-  'C:/Users/Guochun Yang/OneDrive - University of Iowa/WithLi/Paper/data_share/R1/SRC元分析文献汇总_lizh_ygc.xlsx',
-  sheet = 'TableS1-整合',
+  #'C:/Users/Guochun Yang/OneDrive - University of Iowa/WithLi/Paper/data_share/R1/SRC元分析文献汇总_lizh_ygc.xlsx',
+  'C:/Users/Guochun Yang/OneDrive - University of Iowa/WithLi/Paper/forNHB/R1/Table S1_NHB_R1_0623.xlsx',
+  sheet = 'Sheet2', #'TableS1-整合',
   skip = 1
 )
 
@@ -89,6 +90,7 @@ for (i in 1:nfile) {
     data2$HandnessCode[istudy] <- supptable$HandnessCode[idx]
     data2$ContrastCode[istudy] <- supptable$ContrastCode[idx]
     data2$ErrorTrialCode[istudy] <- supptable$ErrorTrialCode[idx]
+    data2$DesignCode[istudy] <- supptable$DesignCode[idx]
     
     #add age from sdmtable
     idx2 <- which(sdmtable$study == data2$study[istudy])
@@ -98,13 +100,14 @@ for (i in 1:nfile) {
   
   ## add dummy columns
   data2 <- dummy_cols(data2, 
-                      select_columns = c("TaskCode","HandnessCode","ContrastCode","ErrorTrialCode"))
+                      select_columns = c("TaskCode","HandnessCode","ContrastCode","ErrorTrialCode","DesignCode"))
   
   ## z-score these columns
   idx_col <- which(colnames(data2) %in% c('TaskCode_1','TaskCode_2','TaskCode_3','TaskCode_4',
                                           'HandnessCode_1','HandnessCode_2','HandnessCode_3',
                                           'ContrastCode_1','ContrastCode_2','ContrastCode_3',
-                                          'ErrorTrialCode_1','ErrorTrialCode_2','ErrorTrialCode_3'))
+                                          'ErrorTrialCode_1','ErrorTrialCode_2','ErrorTrialCode_3',
+                                          'DesignCode_1','DesignCode_0'))
   for (icol in 1:length(idx_col)) {
     data2[,idx_col[icol]] = as.vector(scale(data2[,idx_col[icol]]))
   }
@@ -130,7 +133,7 @@ for (i in 1:nfile) {
   
   
   # models
-  b <- gam(beta~s(age) + TaskCode_1 + TaskCode_2 + TaskCode_3 + HandnessCode_1 + HandnessCode_2 + ContrastCode_1 + ContrastCode_2 + ErrorTrialCode_1 + ErrorTrialCode_2,data=data2, weights = weight, method = 'REML')
+  b <- gam(beta~s(age) + TaskCode_1 + TaskCode_2 + TaskCode_3 + HandnessCode_1 + HandnessCode_2 + ContrastCode_1 + ContrastCode_2 + ErrorTrialCode_1 + ErrorTrialCode_2 + DesignCode_1,data=data2, weights = weight, method = 'REML')
   sumb <- summary(b)
   F <- sumb$s.table[1,'F']
   Fs[i] <- F
@@ -159,35 +162,35 @@ for (i in 1:nfile) {
       rma(beta, 
           var, 
           mods = ~ age + I(age^2)
-          + TaskCode_1 + TaskCode_2 + TaskCode_3 + HandnessCode_1 + HandnessCode_2 + ContrastCode_1 + ContrastCode_2 + ErrorTrialCode_1,
+          + TaskCode_1 + TaskCode_2 + TaskCode_3 + HandnessCode_1 + HandnessCode_2 + ContrastCode_1 + ContrastCode_2 + ErrorTrialCode_1 + DesignCode_1,
           data = data2,
           control=list(stepadj=step))
     res.cub <-
       rma(beta,
           var,
           mods = ~ age + I(age^2) + I(age^3)
-          + TaskCode_1 + TaskCode_2 + TaskCode_3 + HandnessCode_1 + HandnessCode_2 + ContrastCode_1 + ContrastCode_2 + ErrorTrialCode_1, 
+          + TaskCode_1 + TaskCode_2 + TaskCode_3 + HandnessCode_1 + HandnessCode_2 + ContrastCode_1 + ContrastCode_2 + ErrorTrialCode_1 + DesignCode_1, 
           data = data2,
           control=list(stepadj=step))
     res.log <-
       rma(beta,
           var,
           mods = ~ I(log(age)) + I((log(age))^2)
-          + TaskCode_1 + TaskCode_2 + TaskCode_3 + HandnessCode_1 + HandnessCode_2 + ContrastCode_1 + ContrastCode_2 + ErrorTrialCode_1, 
+          + TaskCode_1 + TaskCode_2 + TaskCode_3 + HandnessCode_1 + HandnessCode_2 + ContrastCode_1 + ContrastCode_2 + ErrorTrialCode_1 + DesignCode_1, 
           data = data2,
           control=list(stepadj=step))
     res.sqrt <-
       rma(beta,
           var,
           mods = ~ I(sqrt(age)) + age
-          + TaskCode_1 + TaskCode_2 + TaskCode_3 + HandnessCode_1 + HandnessCode_2 + ContrastCode_1 + ContrastCode_2 + ErrorTrialCode_1, 
+          + TaskCode_1 + TaskCode_2 + TaskCode_3 + HandnessCode_1 + HandnessCode_2 + ContrastCode_1 + ContrastCode_2 + ErrorTrialCode_1 + DesignCode_1, 
           data = data2,
           control=list(stepadj=step))
     res.lin <-
       rma(beta,
           var,
           mods = ~ age
-          + TaskCode_1 + TaskCode_2 + TaskCode_3 + HandnessCode_1 + HandnessCode_2 + ContrastCode_1 + ContrastCode_2 + ErrorTrialCode_1, 
+          + TaskCode_1 + TaskCode_2 + TaskCode_3 + HandnessCode_1 + HandnessCode_2 + ContrastCode_1 + ContrastCode_2 + ErrorTrialCode_1 + DesignCode_1, 
           data = data2,
           control=list(stepadj=step))
   } else {
@@ -195,35 +198,35 @@ for (i in 1:nfile) {
       rma(beta, 
           var, 
           mods = ~ age + I(age^2)
-          + TaskCode_1 + TaskCode_2 + TaskCode_3 + HandnessCode_1 + HandnessCode_2 + ContrastCode_1 + ContrastCode_2 + ErrorTrialCode_1 + ErrorTrialCode_2,
+          + TaskCode_1 + TaskCode_2 + TaskCode_3 + HandnessCode_1 + HandnessCode_2 + ContrastCode_1 + ContrastCode_2 + ErrorTrialCode_1 + ErrorTrialCode_2 + DesignCode_1,
           data = data2,
           control=list(stepadj=step))
     res.cub <-
       rma(beta,
           var,
           mods = ~ age + I(age^2) + I(age^3)
-          + TaskCode_1 + TaskCode_2 + TaskCode_3 + HandnessCode_1 + HandnessCode_2 + ContrastCode_1 + ContrastCode_2 + ErrorTrialCode_1 + ErrorTrialCode_2, 
+          + TaskCode_1 + TaskCode_2 + TaskCode_3 + HandnessCode_1 + HandnessCode_2 + ContrastCode_1 + ContrastCode_2 + ErrorTrialCode_1 + ErrorTrialCode_2 + DesignCode_1, 
           data = data2,
           control=list(stepadj=step))
     res.log <-
       rma(beta,
           var,
           mods = ~ I(log(age)) + I((log(age))^2)
-          + TaskCode_1 + TaskCode_2 + TaskCode_3 + HandnessCode_1 + HandnessCode_2 + ContrastCode_1 + ContrastCode_2 + ErrorTrialCode_1 + ErrorTrialCode_2, 
+          + TaskCode_1 + TaskCode_2 + TaskCode_3 + HandnessCode_1 + HandnessCode_2 + ContrastCode_1 + ContrastCode_2 + ErrorTrialCode_1 + ErrorTrialCode_2 + DesignCode_1, 
           data = data2,
           control=list(stepadj=step))
     res.sqrt <-
       rma(beta,
           var,
           mods = ~ I(sqrt(age)) + age
-          + TaskCode_1 + TaskCode_2 + TaskCode_3 + HandnessCode_1 + HandnessCode_2 + ContrastCode_1 + ContrastCode_2 + ErrorTrialCode_1 + ErrorTrialCode_2, 
+          + TaskCode_1 + TaskCode_2 + TaskCode_3 + HandnessCode_1 + HandnessCode_2 + ContrastCode_1 + ContrastCode_2 + ErrorTrialCode_1 + ErrorTrialCode_2 + DesignCode_1, 
           data = data2,
           control=list(stepadj=step))
     res.lin <-
       rma(beta,
           var,
           mods = ~ age
-          + TaskCode_1 + TaskCode_2 + TaskCode_3 + HandnessCode_1 + HandnessCode_2 + ContrastCode_1 + ContrastCode_2 + ErrorTrialCode_1 + ErrorTrialCode_2, 
+          + TaskCode_1 + TaskCode_2 + TaskCode_3 + HandnessCode_1 + HandnessCode_2 + ContrastCode_1 + ContrastCode_2 + ErrorTrialCode_1 + ErrorTrialCode_2 + DesignCode_1, 
           data = data2,
           control=list(stepadj=step))
   }
@@ -283,45 +286,46 @@ p_gam_fdr <- p.adjust(ps_gam, method = 'fdr', n = length(ps_gam))
 
 p_values <- p_zs <- zval_meanage <- zval_randage <- array(,dim = c(nfile,5))
 F_meanage <- F_randage <- array(,dim = c(nfile,1))
+
 for (i in 1:nfile) {
   
-  # calculate the modulator effect (including age and others) on average across the nperm values
-  p_value <- pchisq(mean(QMss[i,1,1:nperm],na.rm=TRUE), reses_qua[[i]]$QMdf[1], lower.tail = FALSE)
+  # calculate the modulator effect (including age and others)
+  p_value <- pchisq(mean(QMss[i,1],na.rm=TRUE), reses_qua[[i]]$QMdf[1], lower.tail = FALSE)
   p_values[i,1] <- p_value
-  p_value <- pchisq(mean(QMss[i,2,1:nperm],na.rm=TRUE), reses_cub[[i]]$QMdf[1], lower.tail = FALSE)
+  p_value <- pchisq(mean(QMss[i,2],na.rm=TRUE), reses_cub[[i]]$QMdf[1], lower.tail = FALSE)
   p_values[i,2] <- p_value
-  p_value <- pchisq(mean(QMss[i,3,1:nperm],na.rm=TRUE), reses_log[[i]]$QMdf[1], lower.tail = FALSE)
+  p_value <- pchisq(mean(QMss[i,3],na.rm=TRUE), reses_log[[i]]$QMdf[1], lower.tail = FALSE)
   p_values[i,3] <- p_value
-  p_value <- pchisq(mean(QMss[i,4,1:nperm],na.rm=TRUE), reses_sqrt[[i]]$QMdf[1], lower.tail = FALSE)
+  p_value <- pchisq(mean(QMss[i,4],na.rm=TRUE), reses_sqrt[[i]]$QMdf[1], lower.tail = FALSE)
   p_values[i,4] <- p_value
-  p_value <- pchisq(mean(QMss[i,5,1:nperm],na.rm=TRUE), reses_lin[[i]]$QMdf[1], lower.tail = FALSE)
+  p_value <- pchisq(mean(QMss[i,5],na.rm=TRUE), reses_lin[[i]]$QMdf[1], lower.tail = FALSE)
   p_values[i,5] <- p_value
   
-  #calculate the age modulator effect in each model on average across the nperm values
-  p_z <- pnorm(mean(zss[i,1,1:nperm],na.rm=TRUE), lower.tail = TRUE)
+  #calculate the age modulator effect in each model
+  p_z <- pnorm(mean(zss[i,1],na.rm=TRUE), lower.tail = TRUE)
   p_zs[i,1] <- p_z
-  p_z <- pnorm(mean(zss[i,2,1:nperm],na.rm=TRUE), lower.tail = FALSE)
+  p_z <- pnorm(mean(zss[i,2],na.rm=TRUE), lower.tail = FALSE)
   p_zs[i,2] <- p_z
-  p_z <- pnorm(mean(zss[i,3,1:nperm],na.rm=TRUE), lower.tail = TRUE)
+  p_z <- pnorm(mean(zss[i,3],na.rm=TRUE), lower.tail = TRUE)
   p_zs[i,3] <- p_z
-  p_z <- pnorm(mean(zss[i,4,1:nperm],na.rm=TRUE), lower.tail = FALSE)
+  p_z <- pnorm(mean(zss[i,4],na.rm=TRUE), lower.tail = FALSE)
   p_zs[i,4] <- p_z
-  p_z <- pnorm(mean(zss[i,5,1:nperm],na.rm=TRUE), lower.tail = FALSE)
+  p_z <- pnorm(mean(zss[i,5],na.rm=TRUE), lower.tail = FALSE)
   p_zs[i,5] <- p_z
   
   zval_meanage[i,1] <- reses_qua[[i]]$zval[3]
-  zval_randage[i,1] <- mean(zss[i,1,1:nperm],na.rm=TRUE)
+  zval_randage[i,1] <- mean(zss[i,1],na.rm=TRUE)
   zval_meanage[i,2] <- reses_cub[[i]]$zval[4]
-  zval_randage[i,2] <- mean(zss[i,2,1:nperm],na.rm=TRUE)
+  zval_randage[i,2] <- mean(zss[i,2],na.rm=TRUE)
   zval_meanage[i,3] <- reses_log[[i]]$zval[3]
-  zval_randage[i,3] <- mean(zss[i,3,1:nperm],na.rm=TRUE)
+  zval_randage[i,3] <- mean(zss[i,3],na.rm=TRUE)
   zval_meanage[i,4] <- reses_sqrt[[i]]$zval[2]
-  zval_randage[i,4] <- mean(zss[i,4,1:nperm],na.rm=TRUE)
+  zval_randage[i,4] <- mean(zss[i,4],na.rm=TRUE)
   zval_meanage[i,5] <- reses_lin[[i]]$zval[2]
-  zval_randage[i,5] <- mean(zss[i,5,1:nperm],na.rm=TRUE)
+  zval_randage[i,5] <- mean(zss[i,5],na.rm=TRUE)
   
   F_meanage[i,1] <- Fs_gam[i]
-  F_randage[i,1] <- mean(Fs[i,1:nperm],na.rm=TRUE)
+  F_randage[i,1] <- mean(Fs[i],na.rm=TRUE)
 }
 
 
@@ -446,7 +450,8 @@ for (i in 1:nfile) {
     ContrastCode_1 = 0,
     ContrastCode_2 = 0,
     ErrorTrialCode_1 = 0,
-    ErrorTrialCode_2 = 0
+    ErrorTrialCode_2 = 0,
+    DesignCode_1 = 0
   ),se.fit = TRUE)
   
   peak_gam <- xs[which.max(preds$fit)]

@@ -17,7 +17,7 @@ source('H:/meta_development/Results_R1/SDM/scripts/plot_distribution.R')
 datadir = shortPathName("H:/meta_development/Results_R1/SDM/mean/analysis_Adult-ChildOld/") 
 sdmdir = 'H:/meta_development/Results_R1/SDM/mean/' #sdm_good
 
-filenames = list.files(path = paste(datadir,'analysis_MyLinearModel/extracts',sep = ''),
+filenames = list.files(path = paste(datadir,'analysis_MyLinearModel/extracts/backup',sep = ''),
                        pattern = "^multivoxel_extract_mean_good_z_voxelCorrected_p_0.00100_10_blob.*\\.txt$")
 filenames = natural_sort(filenames,'blob','.txt')
 
@@ -53,7 +53,7 @@ rmeans <- rmins <- c()
 for (i in 1:nfile) {
 # for (i in c(1:6,8)) {
     data = read.table(
-    paste(datadir, 'analysis_MyLinearModel/extracts', filenames[i], sep = '/'),
+    paste(datadir, 'analysis_MyLinearModel/extracts/backup', filenames[i], sep = '/'),
     header = FALSE,
     sep = '',
     dec = '.',
