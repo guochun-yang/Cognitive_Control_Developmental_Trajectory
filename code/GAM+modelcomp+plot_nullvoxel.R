@@ -9,15 +9,15 @@ library(mgcv)
 library(MASS)
 library("readxl")
 library(fastDummies)
-source('H:/meta_development/Results_R1/SDM/scripts_NHB/naturalSortFunctions.R')
+source('./naturalSortFunctions.R')
 
 ## load data and calculate the averaged betas and variances
-datadir = shortPathName("H:/meta_development/Results_R1/SDM/mean/analysis_Adult-ChildOld/") 
-sdmdir = 'H:/meta_development/Results_R1/SDM/mean/' #sdm_good
+datadir = shortPathName("../data/") 
+sdmdir = '../data/'
 
 filenames = c("extract_22_-63_42.txt","extract_34_4_52.txt")
 
-savedir = shortPathName("H:/meta_development/Results_R1/SDM/mean/analysis_Adult-ChildOld/plot/null_voxel+design/")
+savedir = shortPathName("../plot/null_voxel+design/")
 if (!dir.exists(savedir)) {
   dir.create(savedir, recursive = TRUE)
 }
@@ -34,9 +34,8 @@ sdmtable = read.table(
 
 ## load the supplementary table to read the covariates
 supptable = read_excel(
-  #'C:/Users/Guochun Yang/OneDrive - University of Iowa/WithLi/Paper/data_share/R1/SRC元分析文献汇总_lizh_ygc.xlsx',
-  'C:/Users/Guochun Yang/OneDrive - University of Iowa/WithLi/Paper/forNHB/R1/Table S1_NHB_R1_0623.xlsx',
-  sheet = 'Sheet2', #'TableS1-整合',
+  '../data/Table.xlsx',
+  sheet = 'Sheet2',
   skip = 1
 )
 
@@ -54,7 +53,7 @@ Fs <- ps <- df1s <- df2s <- array(,dim = c(nfile))
 QMss <- zss <- array(, dim = c(nfile, 5)) #ROI, 4, #perm
 for (i in 1:nfile) {
   data = read.table(
-    paste(datadir, 'analysis_MyLinearModel/extracts', filenames[i], sep = '/'),
+    paste(datadir, 'extracted_data_contrastanalysis', filenames[i], sep = '/'),
     header = FALSE,
     sep = '',
     dec = '.',

@@ -10,20 +10,20 @@ library("readxl")
 library(fastDummies)
 library(lme4)
 library(gammit)
-source('H:/meta_development/Results_R1/SDM/scripts/naturalSortFunctions.R')
-source('H:/meta_development/Results_R1/SDM/scripts/plot_distribution.R')
+source('./naturalSortFunctions.R')
+source('./pmtx_adjust.R')
 
 ## load data and calculate the averaged betas and variances
-datadir = shortPathName("H:/meta_development/Results_R1/SDM/mean/analysis_Adult-ChildOld/") 
-sdmdir = 'H:/meta_development/Results_R1/SDM/mean/' #sdm_good
+datadir = shortPathName("../data/") 
+sdmdir = '../data/'
 
-filenames = list.files(path = paste(datadir,'analysis_MyLinearModel/extracts/backup',sep = ''),
+filenames = list.files(path = paste(datadir,'extracted_data_contrastanalysis',sep = ''),
                        pattern = "^multivoxel_extract_mean_good_z_voxelCorrected_p_0.00100_10_blob.*\\.txt$")
 filenames = natural_sort(filenames,'blob','.txt')
 
 nperm = 1000
 
-savedir = shortPathName(paste0("H:/meta_development/Results_R1/SDM/mean/analysis_Adult-ChildOld/plot/testmeanage/",nperm,"/"))
+savedir = shortPathName(paste0("../plot/testmeanage",nperm,"/"))
 if (!dir.exists(savedir)) {
   dir.create(savedir, recursive = TRUE)
 }
@@ -40,11 +40,10 @@ sdmtable = read.table(
 
 ## load the supplementary table to read the covariates
 supptable = read_excel(
-  'C:/Users/Guochun Yang/OneDrive - University of Iowa/WithLi/Paper/data_share/R1/SRC元分析文献汇总_lizh_ygc.xlsx',
-  sheet = 'TableS1-整合',
+  '../data/Table.xlsx',
+  sheet = 'Sheet2',
   skip = 1
 )
-
 
 # Fs_gam <- ps_gam <- data2s <- bs <- reses_qua <- reses_cub <- reses_log <- reses_sqrt <- reses_revlog <- reses_revsqrt <- reses_lin <- c()
 # Fs <- ps <- df1s <- df2s <- array(,dim = c(nfile,nperm+1))
@@ -53,7 +52,7 @@ rmeans <- rmins <- c()
 for (i in 1:nfile) {
 # for (i in c(1:6,8)) {
     data = read.table(
-    paste(datadir, 'analysis_MyLinearModel/extracts/backup', filenames[i], sep = '/'),
+    paste(datadir, 'extracted_data_contrastanalysis', filenames[i], sep = '/'),
     header = FALSE,
     sep = '',
     dec = '.',

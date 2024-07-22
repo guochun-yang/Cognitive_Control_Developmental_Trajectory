@@ -9,18 +9,18 @@ library(mgcv)
 library(MASS)
 library("readxl")
 library(fastDummies)
-source('H:/meta_development/Results_R1/SDM/scripts_NHB/naturalSortFunctions.R')
-source('H:/meta_development/Results_R1/SDM/scripts_NHB/pmtx_adjust.R')
+source('./naturalSortFunctions.R')
+source('./pmtx_adjust.R')
 
 ## load data and calculate the averaged betas and variances
-datadir = shortPathName("H:/meta_development/Results_R1/SDM/mean/analysis_Adult-ChildOld/") 
-sdmdir = 'H:/meta_development/Results_R1/SDM/mean/' #sdm_good
+datadir = shortPathName("../data/") 
+sdmdir = '../data/'
 
-filenames = list.files(path = paste(datadir,'analysis_MyLinearModel/extracts/backup',sep = ''),
+filenames = list.files(path = paste(datadir,'extracted_data_contrastanalysis',sep = ''),
                        pattern = "^multivoxel_extract_MyLinearModel_adult_childolder_good_z_voxelCorrected_p_0.00100_1_blob.*\\.txt$")
 filenames = natural_sort(filenames,'blob','.txt')
 
-savedir = shortPathName("H:/meta_development/Results_R1/SDM/mean/analysis_Adult-ChildOld/plot/blob_adult-chilolder_good+design/")
+savedir = shortPathName("../plot/analysis_Adult-ChildOld/")
 if (!dir.exists(savedir)) {
   dir.create(savedir, recursive = TRUE)
 }
@@ -37,9 +37,8 @@ sdmtable = read.table(
 
 ## load the supplementary table to read the covariates
 supptable = read_excel(
-  #'C:/Users/Guochun Yang/OneDrive - University of Iowa/WithLi/Paper/data_share/R1/SRC元分析文献汇总_lizh_ygc.xlsx',
-  'C:/Users/Guochun Yang/OneDrive - University of Iowa/WithLi/Paper/forNHB/R1/Table S1_NHB_R1_0623.xlsx',
-  sheet = 'Sheet2', #'TableS1-整合',
+  '../data/Table.xlsx',
+  sheet = 'Sheet2',
   skip = 1
 )
 
@@ -57,7 +56,7 @@ Fs <- ps <- df1s <- df2s <- array(,dim = c(nfile))
 QMss <- zss <- array(, dim = c(nfile, 5)) #ROI, 4, #perm
 for (i in 1:nfile) {
   data = read.table(
-    paste(datadir, 'analysis_MyLinearModel/extracts/backup', filenames[i], sep = '/'),
+    paste(datadir, 'extracted_data_contrastanalysis', filenames[i], sep = '/'),
     header = FALSE,
     sep = '',
     dec = '.',
@@ -355,8 +354,7 @@ xs <- seq(8, 75, length=500)
 
 minmax = minAIC
 peak_rmas <- peak_gams <- c()
-# for (i in 1:nfile) {
-for (i in 3) {
+ for (i in 1:nfile) {
   # the covariate matrix
   data2 <- data2s[[i]]
   

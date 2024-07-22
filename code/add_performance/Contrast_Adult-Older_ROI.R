@@ -9,19 +9,19 @@ library(mgcv)
 library(MASS)
 library("readxl")
 library(fastDummies)
-source('H:/meta_development/Results_R1/SDM/scripts_NHB/naturalSortFunctions.R')
-source('H:/meta_development/Results_R1/SDM/scripts_NHB/pmtx_adjust.R')
+source('./naturalSortFunctions.R')
+source('./pmtx_adjust.R')
 
 ## load data and calculate the averaged betas and variances
-datadir = shortPathName("H:/meta_development/Results_R1/SDM/mean/analysis_Adult_minus_Older_good/") 
-sdmdir = 'H:/meta_development/Results_R1/SDM/mean/' #sdm_good
+datadir = '../data/'
+sdmdir = '../data/'
 
-filenames = list.files(path = paste(datadir,'extracts',sep = ''),
+filenames = list.files(path = paste(datadir,'extracted_data_contrastanalysis',sep = ''),
                        pattern = "^multivoxel_extract_Adult_minus_Older_good_z_voxelCorrected_p_0.00100_10_pblob.*\\.txt$")
 
 filenames = natural_sort(filenames,'pblob','.txt')
 
-savedir = shortPathName("H:/meta_development/Results_R1/SDM/mean/analysis_Adult_minus_Older_good/plots/blob_adult-older_good+design+SRC/")
+savedir = shortPathName("../plot/blob_adult-older_good+design+SRC/")
 if (!dir.exists(savedir)) {
   dir.create(savedir, recursive = TRUE)
 }
@@ -38,9 +38,8 @@ sdmtable = read.table(
 
 ## load the supplementary table to read the covariates
 supptable = read_excel(
-  #'C:/Users/Guochun Yang/OneDrive - University of Iowa/WithLi/Paper/data_share/R1/SRC元分析文献汇总_lizh_ygc.xlsx',
-  'C:/Users/Guochun Yang/OneDrive - University of Iowa/WithLi/Paper/forNHB/R1/Table S1_NHB_R1_0623.xlsx',
-  sheet = 'Sheet2', #'TableS1-整合',
+  '../data/Table.xlsx',
+  sheet = 'Sheet2',
   skip = 1
 )
 
@@ -59,7 +58,7 @@ Fs <- ps <- df1s <- df2s <- array(,dim = c(nfile))
 zss <- pss <- array(, dim = c(nfile, 1)) #ROI, 4, #perm
 for (i in 1:nfile) {
   data = read.table(
-    paste(datadir, 'extracts', filenames[i], sep = '/'),
+    paste(datadir, 'extracted_data_contrastanalysis', filenames[i], sep = '/'),
     header = FALSE,
     sep = '',
     dec = '.',

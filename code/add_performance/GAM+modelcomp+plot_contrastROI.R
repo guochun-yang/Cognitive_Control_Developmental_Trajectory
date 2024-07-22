@@ -9,18 +9,18 @@ library(mgcv)
 library(MASS)
 library("readxl")
 library(fastDummies)
-source('H:/meta_development/Results_R1/SDM/scripts_NHB/naturalSortFunctions.R')
-source('H:/meta_development/Results_R1/SDM/scripts_NHB/pmtx_adjust.R')
+source('./naturalSortFunctions.R')
+source('./pmtx_adjust.R')
 
 ## load data and calculate the averaged betas and variances
-datadir = shortPathName("H:/meta_development/Results_R1/SDM/mean/analysis_Adult-ChildOld/") 
-sdmdir = 'H:/meta_development/Results_R1/SDM/mean/' #sdm_good
+datadir = shortPathName("../data/") 
+sdmdir = '../data/'
 
-filenames = list.files(path = paste(datadir,'analysis_MyLinearModel/extracts/backup',sep = ''),
+filenames = list.files(path = paste(datadir,'extracted_data_contrastanalysis',sep = ''),
                        pattern = "^multivoxel_extract_MyLinearModel_adult_childolder_good_z_voxelCorrected_p_0.00100_1_blob.*\\.txt$")
 filenames = natural_sort(filenames,'blob','.txt')
 
-savedir = shortPathName("H:/meta_development/Results_R1/SDM/mean/analysis_Adult-ChildOld/plot/blob_adult-chilolder_good+design+SRC/")
+savedir = shortPathName("../plot/blob_adult-chilolder_good+design+SRC/")
 if (!dir.exists(savedir)) {
   dir.create(savedir, recursive = TRUE)
 }
@@ -37,11 +37,11 @@ sdmtable = read.table(
 
 ## load the supplementary table to read the covariates
 supptable = read_excel(
-  #'C:/Users/Guochun Yang/OneDrive - University of Iowa/WithLi/Paper/data_share/R1/SRC元分析文献汇总_lizh_ygc.xlsx',
-  'C:/Users/Guochun Yang/OneDrive - University of Iowa/WithLi/Paper/forNHB/R1/Table S1_NHB_R1_0623.xlsx',
-  sheet = 'Sheet2', #'TableS1-整合',
+  '../data/Table.xlsx',
+  sheet = 'Sheet2',
   skip = 1
 )
+
 
 logliks = matrix(, nrow = nfile, ncol = 5)
 AICs = matrix(, nrow = nfile, ncol = 5)
@@ -57,7 +57,7 @@ Fs <- ps <- df1s <- df2s <- array(,dim = c(nfile))
 QMss <- zss <- array(, dim = c(nfile, 5)) #ROI, 4, #perm
 for (i in 1:nfile) {
   data = read.table(
-    paste(datadir, 'analysis_MyLinearModel/extracts/backup', filenames[i], sep = '/'),
+    paste(datadir, 'extracted_data_contrastanalysis', filenames[i], sep = '/'),
     header = FALSE,
     sep = '',
     dec = '.',
@@ -357,257 +357,3 @@ for (i in 1:nfile) {
 
 modelweights2 <- format(round(modelweights, 3), nsmall = 3)
 write.matrix(modelweights2, file = paste(savedir,"modelweights.csv"), sep = ',')
-
-
-
-
-###  plot the figures  ###
-xs <- seq(8, 75, length=500)
-
-minmax = minAIC
-peak_rmas <- peak_gams <- c()
-# for (i in 1:nfile) {
-for (i in 3) {
-  # the covariate matrix
-  data2 <- data2s[[i]]
-  
-  mtx_cov_xs <- matrix(0,nrow = length(xs), ncol = length(reses_qua[[i]]$beta)-3)
-  if (minmax[i] == 1) {
-    modelbest = reses_qua[[i]]
-    title = "QUADRATIC"
-    sav <-
-      predict(modelbest, newmods = unname(cbind(poly(
-        xs, degree = 2, raw = TRUE
-      ),mtx_cov_xs)))
-    peak_rma = -0.5*modelbest$b[2,1]/modelbest$b[3,1]
-    if (modelbest$pval[3] > 0.05) {
-      sav$pred <- NaN
-      peak_rma <- NaN
-    }
-  } else if (minmax[i] == 2) {
-    modelbest = reses_cub[[i]]
-    title = "CUBIC"
-    sav <-
-      predict(modelbest, newmods = unname(cbind(poly(
-        xs, degree = 3, raw = TRUE
-      ),mtx_cov_xs)))
-    if (modelbest$b[4,1] > 0) {
-      peak_rma = (-2*modelbest$b[3,1] - sqrt(4*(modelbest$b[3,1])^2 - 12*modelbest$b[2,1]*modelbest$b[4,1]))/(6*modelbest$b[4,1])
-    } else {
-      peak_rma = (-2*modelbest$b[3,1] + sqrt(4*(modelbest$b[3,1])^2 - 12*modelbest$b[2,1]*modelbest$b[4,1]))/(6*modelbest$b[4,1])
-    }
-    if (modelbest$pval[4] > 0.05) {
-      sav$pred <- NaN
-      peak_rma <- NaN
-    }
-  } else if (minmax[i] == 3) {
-    modelbest = reses_log[[i]]
-    title = "LOG"
-    sav <-
-      predict(modelbest, newmods = unname(cbind(poly(
-        log(xs), degree = 2, raw = TRUE
-      ),mtx_cov_xs)))
-    peak_rma = exp(-modelbest$b[2,1]/(2*modelbest$b[3,1]))
-    if (modelbest$pval[3] > 0.05) {
-      sav$pred <- NaN
-      peak_rma <- NaN
-    }
-  } else if (minmax[i] == 4) {
-    modelbest = reses_sqrt[[i]]
-    title = "SQRT"
-    sav <-
-      predict(modelbest, newmods = unname(cbind(poly(
-        sqrt(xs), degree = 2, raw = TRUE
-      ),mtx_cov_xs)))
-    peak_rma = 0.25*(modelbest$b[2,1]/modelbest$b[3,1])^2
-    if (modelbest$pval[2] > 0.05) {
-      sav$pred <- NaN
-      peak_rma <- NaN
-    }
-  } else if (minmax[i] == 5) {
-    modelbest = reses_lin[[i]]
-    title = "LIN"
-    sav <-
-      predict(modelbest, newmods = unname(cbind(poly(
-        xs, degree = 1, raw = TRUE
-      ),mtx_cov_xs)))
-    peak_rma = NaN
-    # if (modelbest$pval[2] > 0.05 && p_gam_fdr[i] < 0.05) {
-    #   sav$pred <- NaN
-    # }
-  }
-  peak_rmas[i] = peak_rma
-
-  
-  
-  # ylim0 <- c()
-  # maxvar = max(data2$variance)
-  # ylim0[1] = min(floor((data2$beta-maxvar)*100)/100)
-  # ylim0[2] = max(ceiling((data2$beta+maxvar)*100)/100)
-  ylim0 = c(-0.2,1.0)
-  ylim1 = c(-0.18,1.02)
-  
-  modpred <- data.frame(xs,sav$pred,sav$se)
-  modpred$upper <- modpred$sav.pred + modpred$sav.se
-  modpred$lower <- modpred$sav.pred - modpred$sav.se
-  
-  
-  ### gam prediction
-  b <- bs[[i]]
-  xs0 <- b$model$age
-  preds0 <- predict.gam(b,se.fit = TRUE)
-  
-  # mtx_b <- data.frame(model.matrix(b)) # if outliers removed the data points are different with data2, so here use the model matrix to get the covariate values
-  
-  preds <- predict(b, newdata = data.frame(
-    age = xs,
-    TaskCode_1 = 0,
-    TaskCode_2 = 0,
-    TaskCode_3 = 0,
-    HandnessCode_1 = 0,
-    HandnessCode_2 = 0,
-    ContrastCode_1 = 0,
-    ContrastCode_2 = 0,
-    ErrorTrialCode_1 = 0,
-    ErrorTrialCode_2 = 0,
-    DesignCode_1 = 0,
-    SRC = 0
-  ),se.fit = TRUE)
-  
-  peak_gam <- xs[which.max(preds$fit)]
-  if (peak_gam > 60 || p_gam_fdr[i] > 0.05) {
-    peak_gam <- NaN
-  }
-  peak_gams[i] = round(peak_gam,1)
-  
-  gampred <- data.frame(xs,preds$fit,preds$se.fit)
-  gampred$upper <- gampred$preds.fit + gampred$preds.se.fit
-  gampred$lower <- gampred$preds.fit - gampred$preds.se.fit
-  
-  if (p_gam_fdr[i] > 0.05) {
-    gampred$preds.fit <- gampred$upper <- gampred$lower <- NaN
-  }
-  
-
-  ### plot all at once
-  # filename = str_match(filenames[i], "_p_0.00100_10_\\s*(.*?)\\s*.txt")
-  filename = str_match(filenames[i], "extract_\\s*(.*?)\\s*.txt")
-  tiff(
-    file = paste(savedir, filename[, 2], "_sameylim.tiff", sep = ''),
-    width = 6,
-    height = 5,
-    units = "in",
-    res = 300
-  )
-  
-  # windows()
-  par(cex.lab=2)
-  par(cex.axis=2)
-  par(mai=c(1,1.2,0.2,0.2))
-  par(mgp=c(3.5,1,0))
-  plt = regplot(
-    reses_qua[[i]], # this is only to make sure all dots are with the original scale (we can also use reses_cub but not log)
-    mod = 2,
-    lcol = 'red',
-    # pred = FALSE,
-    ci=FALSE,
-    pred = FALSE,
-    xvals = xs,
-    las = 1,
-    digits = 1,
-    bty = "l",
-    psize = .20 / sqrt(modelbest$vi),
-    xlab = "Age (years)",ylab = "Effect size",
-    xlim = c(8, 75),
-    ylim = c(ylim0[1],ylim0[2])
-  )
-  lim0 <- par("usr")
-  
-  par(new=TRUE)
-  # windows()
-  lines(modpred$xs, modpred$sav.pred, type = 'l', lwd = 3, col = 'red')  # or type = 'n' if you just want to set up axes
-  transparent_red <- rgb(1, 0, 0, alpha = 0.2)  # For example, gray with 50% transparency
-  polygon(c(modpred$xs, rev(modpred$xs)), c(modpred$upper, rev(modpred$lower)), col = transparent_red, border = NA)
-  lines(modpred$xs, modpred$sav.pred)  # Add main line after to ensure it's on top
-  
-  
-  par(new=TRUE)
-  transparent_color <- rgb(0, 0, 1, alpha = 0.2)  # For example, gray with 50% transparency
-  lines(gampred$xs, gampred$preds.fit, type = 'l', lwd = 3, col = 'blue')  # or type = 'n' if you just want to set up axes
-  polygon(c(gampred$xs, rev(gampred$xs)), c(gampred$upper, rev(gampred$lower)), col = transparent_color, border = NA)
-  lines(gampred$xs, gampred$preds.fit)  # Add main line after to ensure it's on top
-  # lines(xs0, preds0$fit, type = 'l', lwd = 3, col = 'blue')  # or type = 'n' if you just want to set up axes
-  # polygon(c(xs0, rev(xs0)), c(preds0$fit + preds0$se.fit, rev(preds0$fit - preds0$se.fit)), col = transparent_color, border = NA)
-  # lines(xs0, preds0$fit)  # Add main line after to ensure it's on top
-  
-  if (i %in% c(1,4,5,6,7,8,9)) {
-    par(new=TRUE)
-    lines(c(peak_rma,peak_rma),ylim0,lty = 2,col = 'red',lwd = 2)
-  }
-  if (i %in% c(3)) {
-    par(new=TRUE)
-    lines(c(peak_rma,peak_rma),ylim1,lty = 2,col = 'red',lwd = 2) # in fig 3 the two peaks overlap
-  }
-  par(new=TRUE)
-  lines(c(peak_gam,peak_gam),ylim0,lty = 2,col = 'blue',lwd = 2)
-  dev.off()
-}
-cor.test(peak_rmas,peak_gams)
-
-
-
-## test the significance of peaks with the Simonsohn (2018)'s two-line approach. 
-# Simonsohn, U. (2018) Two Lines: A Valid Alternative to the Invalid Testing of U-Shaped Relationships With Quadratic Regressions. Advances in Methods and Practices in Psychological Science, 1(4), 538-555.
-psb <- array(,dim = c(length(bs),2,2)) #9x2(L,R)x(peakGAM,peakRMA)
-for (ipeak in 1:2) {
-  for (i in 1:length(bs)) {
-    b <- bs[[i]]
-    bsum <- summary(b)
-    if (bsum$s.pv > 0.05) {psb[i,iana,ipeak] = NA; next}
-    datab <- b$model
-    datab$var <- 1/datab$`(weights)`
-    datab$weight <- datab$`(weights)`
-    datab$sqrtage <- sqrt(datab$age)
-    predictb <- predict(b, newdata = data.frame(
-      age = datab$age,
-      TaskCode_1 = 0,
-      TaskCode_2 = 0,
-      TaskCode_3 = 0,
-      HandnessCode_1 = 0,
-      HandnessCode_2 = 0,
-      ContrastCode_1 = 0,
-      ContrastCode_2 = 0,
-      ErrorTrialCode_1 = 0,
-      ErrorTrialCode_2 = 0,
-      DesignCode_1 = 0,
-      SRC = 0
-    ))
-    if (ipeak == 1) {
-      idx <- which(predictb==max(predictb))
-    } else {
-      peak <- peak_rmas[i]
-      idx <- which.min(abs(datab$age-peak))
-    }
-  
-    if (length(idx) == 1) {
-      databL <- datab[1:idx,]
-      databR <- datab[idx:length(predictb),]
-    } else {
-      databL <- datab[1:idx[1],]
-      databR <- datab[idx[-1]:length(predictb),]
-    }
-  
-    # fit linear model and see if the slope is significant
-    step = 0.1
-    for (iana in 1:2) { #left and right
-      if (iana == 1) {databX <- databL} else {databX <- databR}
-      bX <- gam(beta~age + TaskCode_1 + TaskCode_2 + TaskCode_3 + HandnessCode_1 + HandnessCode_2 + ContrastCode_1 + ContrastCode_2 + ErrorTrialCode_1 + ErrorTrialCode_2 + DesignCode_1 + SRC,data=databX, weights = weight, method = 'REML')
-      bXsum <- summary(bX)
-      psb[i,iana,ipeak] <- bXsum$p.pv[2]
-    }
-  }
-}
-psb_fdr <- array(dim = dim(psb))
-for (ipeak in 1:2) {
-  psb_fdr[,,ipeak] <- t(apply(psb[,,ipeak]/2, 1, function(x) p.adjust(x, method = "fdr")))
-}

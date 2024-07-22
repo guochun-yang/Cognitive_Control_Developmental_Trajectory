@@ -9,8 +9,8 @@ library(readxl)
 library(fastDummies)
 
 ## load data and calculate the averaged gs and variances
-datadir = shortPathName("H:/meta_development/Results_R1/laterality/")
-savedir = shortPathName("H:/meta_development/Results_R1/laterality/laterality+design/")
+datadir = shortPathName("../data/data_laterality/")
+savedir = shortPathName("../laterality/")
 if (!dir.exists(savedir)) {
   dir.create(savedir, recursive = TRUE)
 }
@@ -50,7 +50,7 @@ agefull = max(data$age)+min(data$age)
 
 
 ## load SDM table
-sdmdir = 'H:/meta_development/Results_R1/SDM/mean/' #sdm_good
+sdmdir = '../data/'
 sdmtable = read.table(
   paste(sdmdir, '/sdm_table.txt', sep = ''),
   header = TRUE,
@@ -60,7 +60,7 @@ sdmtable = read.table(
 
 ## load the supplementary table to read the covariates
 supptable = read_excel(
-  'C:/Users/Guochun Yang/OneDrive - University of Iowa/WithLi/Paper/forNHB/R1/Table S1_NHB_R1_0623.xlsx',
+  '../data/Table.xlsx',
   sheet = 'Sheet2',
   skip = 1
 )
