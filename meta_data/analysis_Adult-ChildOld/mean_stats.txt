@@ -1,0 +1,27 @@
+MyLinearModel_<i>&tau;</i><sup>2</sup>	0.010176	NA	NA	0.100876162	0.114799826
+MyLinearModel_<i>&tau;</i><sup>2</sup>	0.013179	NA	NA	0.114799826	
+MyLinearModel_<i>&tau;</i><sup>2</sup>	0.009761	NA	NA	0.098797773	
+MyLinearModel_<i>&tau;</i><sup>2</sup>	0.00826	NA	NA	0.090884542	
+MyLinearModel_<i>&tau;</i><sup>2</sup>	0.00594	NA	NA	0.077071395	
+MyLinearModel_<i>&tau;</i><sup>2</sup>	0.009149	NA	NA	0.095650405	
+MyLinearModel_<i>&tau;</i><sup>2</sup>	0.010335	NA	NA	0.101661202	
+MyLinearModel_<i>&tau;</i><sup>2</sup>	0.000796	NA	NA	0.028213472	
+MyLinearModel_<i>&tau;</i><sup>2</sup>	0.001659	NA	NA	0.040730824	
+MyLinearModel_<i>I</i><sup>2</sup>	14.490488	NA	NA		20.110666
+MyLinearModel_<i>I</i><sup>2</sup>	19.165453	NA	NA		
+MyLinearModel_<i>I</i><sup>2</sup>	14.731075	NA	NA		
+MyLinearModel_<i>I</i><sup>2</sup>	15.03869	NA	NA		
+MyLinearModel_<i>I</i><sup>2</sup>	11.181729	NA	NA		
+MyLinearModel_<i>I</i><sup>2</sup>	15.813538	NA	NA		
+MyLinearModel_<i>I</i><sup>2</sup>	20.110666	NA	NA		
+MyLinearModel_<i>I</i><sup>2</sup>	1.786579	NA	NA		
+MyLinearModel_<i>I</i><sup>2</sup>	3.802484	NA	NA		
+MyLinearModel_<i>Q</i><sup>2</sup>	112.522758	NA	-0.949905	10.60767449	11.4913769
+MyLinearModel_<i>Q</i><sup>2</sup>	119.08316	NA	-0.540337	10.91252308	
+MyLinearModel_<i>Q</i><sup>2</sup>	114.268257	NA	-0.86808	10.68963316	
+MyLinearModel_<i>Q</i><sup>2</sup>	120.814705	NA	-0.35262	10.99157427	
+MyLinearModel_<i>Q</i><sup>2</sup>	111.831139	NA	-0.962936	10.5750243	
+MyLinearModel_<i>Q</i><sup>2</sup>	112.876762	NA	-0.873521	10.6243476	
+MyLinearModel_<i>Q</i><sup>2</sup>	132.051743	NA	0.412173	11.4913769	
+MyLinearModel_<i>Q</i><sup>2</sup>	97.10495	NA	-1.952938	9.85418439	
+MyLinearModel_<i>Q</i><sup>2</sup>	108.810051	NA	-1.099135	10.43120564	
