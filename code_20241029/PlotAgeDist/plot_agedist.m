@@ -1,4 +1,4 @@
-datadir = 'C:\Users\Guochun Yang\OneDrive - University of Iowa\WithLi\Paper\forNHB\R2\PlotAgeDist\';
+datadir = 'C:\Users\Guochun Yang\Documents\GitHub\Cognitive_Control_Developmental_Trajectory\code_20241029\PlotAgeDist\'; %%%%%
 T = readtable([datadir 'Table S1.xlsx']);
 % T = csvread([datadir 'agedist.csv'],'head');
 
